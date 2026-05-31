@@ -1,0 +1,59 @@
+# Render Blueprint — single-service deploy for the merged lilush+helpzavr+mailbox bot.
+#
+# https://render.com/docs/infrastructure-as-code
+#
+# Usage:
+#   1. Push this repo to GitHub.
+#   2. https://dashboard.render.com → New + → Blueprint → connect the repo.
+#   3. Render prompts you for BOT_TOKEN — paste the one you got from BotFather.
+#   4. Apply. Render builds the Docker image (~2-3 min) and starts the service.
+#   5. /start the bot in Telegram → first to send /start becomes owner.
+#   6. From there: /role to pick a persona, then 7 buttons on /start:
+#        🤖 Helpzavr  (screenshot helper)
+#        ✨ Красивый текст  (markdown→TG-HTML formatter)
+#        📬 Проверка почты (IMAP mailbox)
+#        📥 Скачать видео
+#        🎭 Сменить роль
+#        🧠 Перенастроить мозг
+#        📊 Статистика токенов
+#
+# If you want the FULL 20-bot farm instead, rename render.farm.yaml → render.yaml.
+
+services:
+  - type: web
+    name: lilush-merged
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: BOT_PERSONA
+        value: boss
+      - key: BOT_TOKEN
+        sync: false        # paste in Render dashboard (BotFather token)
+      - key: BOT_MODE
+        value: polling
+      - key: PORT
+        value: 8080
+      - key: DATA_DIR
+        value: /data
+      # Optional whitelist — if empty, the first /start claims ownership.
+      - key: ALLOWED_USER_IDS
+        sync: false
+      # Optional defaults for the Helpzavr addon. Both can be set here OR
+      # entered via the in-Telegram wizard later (🤖 Helpzavr → 🔑 …).
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      # Optional defaults for the Mailbox addon. Both can be set here OR
+      # entered via the wizard (📬 Проверка почты → ⚙️ Настройки почты).
+      - key: MAILBOX_EMAIL
+        sync: false
+      - key: MAILBOX_PASSWORD
+        sync: false
+    disk:
+      name: lilush-merged-data
+      mountPath: /data
+      sizeGB: 1

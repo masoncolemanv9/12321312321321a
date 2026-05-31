@@ -1,0 +1,41 @@
+# Fly.io app config — https://fly.io/docs/reference/configuration/
+#
+# Usage: install flyctl, then `fly launch --copy-config` from this directory.
+# fly will pick up the Dockerfile and create the app.
+#
+# Persistent volume for data/state.json so the bot remembers its owner across
+# machine restarts. Free tier: 3 GB volume.
+
+app = "codesp-bot"
+primary_region = "fra"   # change to closest region: ams, fra, mad, syd, sea, ...
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  BOT_MODE = "polling"
+  PORT = "8080"
+  DATA_DIR = "/data"
+
+[mounts]
+  source = "bot_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/healthz"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

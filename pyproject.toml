@@ -1,0 +1,136 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lilush"
+version = "0.1.0"
+description = "Self-hosted Telegram-bot with a multi-agent video pipeline (yt-dlp → cut → SEO → publish)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "3mgeorgii" }]
+dependencies = [
+    "aiogram==3.13.1",
+    "aiohttp==3.10.10",
+    "aiosqlite>=0.20,<0.22",
+    "openai>=1.55.0,<3",
+    "httpx>=0.27,<0.29",
+    "python-dotenv==1.0.1",
+    "yt-dlp>=2026.3.0",
+    "faster-whisper>=1.2,<2",
+    "scenedetect>=0.7,<1",
+    "pytrends>=4.9,<5",
+    # Helpzavr / photo addons — imported at module import time by
+    # several handlers, so they need to be installed for `pytest` to
+    # even collect the test suite.
+    "pillow>=11.0",
+    "opencv-python-headless>=4.10",
+    # Pin numpy<2 — numpy 2.x breaks ABI for opencv / faster-whisper
+    # wheels compiled against 1.x. Same line your working Render
+    # deploy was on.
+    "numpy>=1.26,<2",
+    "pytesseract>=0.3.10",
+    # Mailbox addon
+    "imap-tools>=1.7.4",
+    # RAM guard (💻 RAM settings screen)
+    "psutil>=5.9,<8",
+    # 🔊 Голосовой ответчик — on-device Supertonic TTS. First call
+    # downloads the model from HuggingFace; cached in $HF_HOME.
+    "supertonic>=1.3,<2",
+    # Keep huggingface_hub on the 0.x line — faster-whisper 1.2 still
+    # uses APIs that 1.0 (Oct 2025) removed.
+    "huggingface_hub>=0.21,<1",
+    # pandas 3.x ships brand-new (early 2026) and inflates RSS at
+    # import time. Stick with the steady 2.x stream.
+    "pandas>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+    "mypy>=1.13",
+]
+
+[project.scripts]
+lilush = "bot.main:main"
+lilush-send = "bot.send:main"
+
+[tool.setuptools.packages.find]
+include = ["bot", "bot.*"]
+
+# ---- ruff ----------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".devin", "data", "build", "dist"]
+
+[tool.ruff.lint]
+# Conservative starter set — we can tighten over time without churn.
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "SIM", # simplify
+]
+ignore = [
+    "E501", # line-length handled by formatter
+    "B008", # function-call-in-default-argument (Path() default in handlers)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]  # allow `assert False` in tests
+
+# ---- mypy ----------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.11"
+strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+disallow_untyped_defs = false
+exclude = ["build/", "dist/", "data/", "\\.devin/"]
+
+# Pre-existing modules that haven't been typed yet. New code should be
+# strict; we'll lift these overrides one at a time as we refactor.
+# Tracked in .devin/tentacles/_global/todo.md.
+[[tool.mypy.overrides]]
+module = [
+    "bot.agent",
+    "bot.wizard",
+    "bot.handlers",
+    "bot.main",
+    "bot.media_llm",
+    "bot.media_ui",
+    "bot.addons.helpzavr.*",
+    "bot.addons.mailbox.*",
+    "bot.addons.media_toggle.*",
+    "bot.addons.memory.*",
+    "bot.addons.photo_chooser.*",
+    "bot.addons.pretty_text.*",
+    "bot.addons.thinking_style.*",
+]
+ignore_errors = true
+
+# Test modules that haven't been retyped to match the latest aiogram /
+# storage shapes. Run them via pytest; mypy keeps quiet so CI doesn't
+# block on pre-existing type drift.
+[[tool.mypy.overrides]]
+module = [
+    "tests.test_pretty_text_styles",
+    "tests.test_work_command",
+]
+ignore_errors = true
+
+# ---- pytest --------------------------------------------------------------
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lilush.local/schemas/director_brief.schema.json",
+  "title": "director_brief.json",
+  "description": "Analyzer-v3 -> editor-v6 contract artifact. Source of truth: final_spec_FULL.md Part 3.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "capabilities", "window", "scenes", "transcript_segments"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "semver. MAJOR mismatch -> editor hard-fails. Section 3.4.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Optional-field declarations populated by analyzer. Section 3.3.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "face_emotion",
+          "face_gaze",
+          "face_bbox",
+          "action_level",
+          "object_detection",
+          "word_timestamps",
+          "silence_segments",
+          "mirror_clusters",
+          "cuts_candidates",
+          "emphasis_words",
+          "handles",
+          "reorder_license",
+          "hook_text",
+          "match_cut_compatible",
+          "impact_points",
+          "action_subdivision_safe",
+          "creative_goal_seed",
+          "emotional_intent_per_beat"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_s", "end_s"],
+      "properties": {
+        "start_s": { "type": "number", "minimum": 0 },
+        "end_s": { "type": "number", "minimum": 0 },
+        "handles_pre_s": { "type": "number", "minimum": 0, "default": 0 },
+        "handles_post_s": { "type": "number", "minimum": 0, "default": 0 }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["start_s", "end_s", "cluster_id"],
+        "properties": {
+          "start_s": { "type": "number", "minimum": 0 },
+          "end_s": { "type": "number", "minimum": 0 },
+          "cluster_id": { "type": "integer", "minimum": 0 },
+          "action_level": { "type": "number", "minimum": 0, "maximum": 1 },
+          "match_cut_compatible": { "type": "boolean" }
+        }
+      }
+    },
+    "transcript_segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["start_s", "end_s", "text"],
+        "properties": {
+          "start_s": { "type": "number", "minimum": 0 },
+          "end_s": { "type": "number", "minimum": 0 },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "transcript_words": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["word", "start_s", "end_s"],
+        "properties": {
+          "word": { "type": "string" },
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "confidence": { "type": "number" }
+        }
+      }
+    },
+    "faces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "bbox": {
+            "type": "object",
+            "required": ["x", "y", "w", "h"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "w": { "type": "number" },
+              "h": { "type": "number" }
+            }
+          },
+          "confidence": { "type": "number" },
+          "emotion_label": { "type": "string" },
+          "emotion_confidence": { "type": "number" },
+          "gaze_direction": { "type": "string" }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["class"],
+        "properties": {
+          "class": { "type": "string" },
+          "bbox": { "type": "object" },
+          "salience": { "type": "number" },
+          "beat_relevance": { "type": "number" }
+        }
+      }
+    },
+    "silence_segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start_s", "end_s", "emotional_signal"],
+        "properties": {
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "emotional_signal": { "type": "boolean" }
+        }
+      }
+    },
+    "mirror_clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cluster_id", "scenes", "mirror_safe"],
+        "properties": {
+          "cluster_id": { "type": "integer", "minimum": 0 },
+          "scenes": { "type": "array", "items": { "type": "integer" } },
+          "mirror_safe": { "type": "boolean" },
+          "veto_signals": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "cuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["candidate_id", "start_s", "end_s", "kind"],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "kind": {
+            "type": "string",
+            "enum": ["filler", "dead_air", "repeat"]
+          },
+          "confidence": { "type": "number" }
+        }
+      }
+    },
+    "emphasis_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["word", "start_s", "end_s", "semantic_role"],
+        "properties": {
+          "word": { "type": "string" },
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "salience": { "type": "number" },
+          "semantic_role": {
+            "type": "string",
+            "enum": ["revelation", "emotion_peak", "punchline", "key_subject", "key_verb"]
+          }
+        }
+      }
+    },
+    "reorder_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reveal_start_s", "reveal_end_s", "pre_reveal_skippable"],
+      "properties": {
+        "reveal_start_s": { "type": "number" },
+        "reveal_end_s": { "type": "number" },
+        "pre_reveal_skippable": { "type": "boolean" }
+      }
+    },
+    "hook_text": { "type": "string", "maxLength": 120 },
+    "impact_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start_s", "end_s"],
+        "properties": {
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" }
+        }
+      }
+    },
+    "action_subdivision_safe": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start_s", "end_s", "safe_to_transition"],
+        "properties": {
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "safe_to_transition": { "type": "boolean" }
+        }
+      }
+    },
+    "creative_goal_seed": { "type": "string" },
+    "beats_hint": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start_s", "end_s", "emotional_intent"],
+        "properties": {
+          "start_s": { "type": "number" },
+          "end_s": { "type": "number" },
+          "emotional_intent": { "type": "string" }
+        }
+      }
+    }
+  }
+}
