@@ -1,0 +1,34 @@
+aiogram==3.13.1
+aiohttp==3.10.10
+aiosqlite>=0.20,<0.22
+openai>=1.55.0,<3
+httpx>=0.27,<0.29
+python-dotenv==1.0.1
+yt-dlp>=2026.3.0
+faster-whisper>=1.2,<2
+scenedetect>=0.7,<1
+pytrends>=4.9,<5
+# ---- Helpzavr addon (screenshot helper from tg_bot+13) -------------------
+pillow>=11.0
+opencv-python-headless>=4.10
+# Pin numpy<2: numpy 2.x ships an ABI break that crashes opencv /
+# faster-whisper / pandas builds compiled against 1.x. The user's
+# original successful Render deploy was on numpy 1.26.
+numpy>=1.26,<2
+pytesseract>=0.3.10
+# ---- Mailbox addon (IMAP poller, originally freelance-mailbox-mcp) -------
+imap-tools>=1.7.4
+# ---- RAM guard (💻 RAM settings screen) ----------------------------------
+psutil>=5.9,<8
+# ---- 🔊 Голосовой ответчик (on-device Supertonic TTS) --------------
+# Bundles ONNX runtime + soundfile under the hood; first call downloads
+# the model from HuggingFace (cached in $HF_HOME between deploys).
+supertonic>=1.3,<2
+# huggingface_hub 1.0 (Oct 2025) broke a bunch of APIs faster-whisper
+# still uses. Pin <1 so the resolver doesn't silently pull the new
+# major and crash on import inside Render's 512MB free container.
+huggingface_hub>=0.21,<1
+# pandas 3.x (early 2026) and the bleeding-edge numpy/pydantic combos
+# pip resolves to today blow the 512MB budget at import time. Keep
+# the proven 2.x line.
+pandas>=2.0,<3
